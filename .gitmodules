@@ -1,3 +1,6 @@
 [submodule "backend"]
 	path = backend
 	url = https://github.com/Egor-works/t1-corporative-marketplace.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/terriblygood/Team29_Marketplace
