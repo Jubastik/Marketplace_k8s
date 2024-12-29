@@ -1,0 +1,118 @@
+# В реальном проекте должно находится в отдельном файле и в .gitignore
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-secret
+type: Opaque
+stringData:
+  username: 'user'
+  password: 'strong-password'
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-service
+spec:
+  ports:
+    - port: 8888
+      name: config-service
+
+  type: ClusterIP
+  selector:
+    app: config-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-service
+  labels:
+    app: config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-service
+  template:
+    metadata:
+      name: config-service
+      labels:
+        app: config-service
+    spec:
+      priorityClassName: "high-priority"
+      containers:
+        - name: config-service
+          image: jubastik/29_backend_t1
+          command: [ "java", "-jar", "/app/config-service.jar" ]
+          ports:
+            - containerPort: 8888
+          env:
+            - name: CONFIG_SERVICE_PORT
+              value: "8888"
+
+            - name: CONFIG_SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: username
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: password
+
+            - name: EUREKA_SERVICE_URI
+              value: "http://discovery-service:8761/eureka/"
+
+            - name: POSTGRESQL_DB_URL
+              value: "jdbc:postgresql://postgres:5432"
+            - name: POSTGRESQL_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRESQL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: password
+
+            - name: DISCOVERY_SERVICE_PORT
+              value: "8761"
+            - name: GATEWAY_SERVICE_PORT
+              value: "8765"
+            - name: PRODUCT_SERVICE_PORT
+              value: "8081"
+            - name: CART_SERVICE_PORT
+              value: "8082"
+            - name: ORDER_SERVICE_PORT
+              value: "8083"
+            - name: AUTH_SERVICE_PORT
+              value: "8084"
+            - name: CONSUMER_SERVICE_PORT
+              value: "8085"
+          resources:
+            requests:
+              memory: "400Mi"
+              cpu: "250m"
+            limits:
+              memory: "800Mi"
+              cpu: "1"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 10
+
+      restartPolicy: Always
+      
