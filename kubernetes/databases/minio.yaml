@@ -44,6 +44,7 @@ spec:
       labels:
         app: minio
     spec:
+      priorityClassName: "high-priority"
       containers:
         - name: minio
           image: minio/minio:latest
