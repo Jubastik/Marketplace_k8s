@@ -7,6 +7,7 @@ type: Opaque
 stringData:
   username: 'postgre_user'
   password: 'strong_password'
+  url: 'jdbc:postgresql://postgresql-0.postgresql.default.svc.cluster.local:5432'
 
 ---
 

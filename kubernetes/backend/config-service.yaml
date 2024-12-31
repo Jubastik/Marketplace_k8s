@@ -68,7 +68,10 @@ spec:
               value: "http://discovery-service:8761/eureka/"
 
             - name: POSTGRESQL_DB_URL
-              value: "jdbc:postgresql://postgres:5432"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
             - name: POSTGRESQL_DB_USER
               valueFrom:
                 secretKeyRef:
@@ -77,7 +80,7 @@ spec:
             - name: POSTGRESQL_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: minio-secret
+                  name: postgres-secret
                   key: password
 
             - name: DISCOVERY_SERVICE_PORT
@@ -105,7 +108,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8888
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 20
             timeoutSeconds: 5
           readinessProbe:
