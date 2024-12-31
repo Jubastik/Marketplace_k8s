@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+spec:
+  ports:
+    - port: 8082
+      name: cart-service
+
+  type: ClusterIP
+  selector:
+    app: cart-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-service
+  labels:
+    app: cart-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart-service
+  template:
+    metadata:
+      name: cart-service
+      labels:
+        app: cart-service
+    spec:
+      containers:
+        - name: cart-service
+          image: jubastik/29_backend_t1
+          command: [ "java", "-jar", "/app/cart-service.jar" ]
+          ports:
+            - containerPort: 8761
+          env:
+            - name: CONFIG_SERVICE_URI
+              value: "http://config-service:8888"
+            - name: CONFIG_SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: username
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: password
+
+            - name: CART_SERVICE_PORT
+              value: "8082"
+            - name: EUREKA_SERVICE_URI
+              value: "http://discovery-service:8761/eureka/"
+
+            - name: POSTGRESQL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
+            - name: POSTGRESQL_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRESQL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+          resources:
+            requests:
+              memory: "900Mi"
+              cpu: "250m"
+            limits:
+              memory: "1200Mi"
+              cpu: "700m"
+          livenessProbe:
+            httpGet:
+              path: /carts/ping
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /carts/ping
+              port: 8082
+            initialDelaySeconds: 10
+
+      restartPolicy: Always
+      
