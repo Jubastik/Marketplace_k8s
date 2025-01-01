@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  ports:
+    - port: 8081
+      name: product-service
+
+  type: ClusterIP
+  selector:
+    app: product-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      name: product-service
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: jubastik/29_backend_t1
+          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/product-service.jar" ]
+          ports:
+            - containerPort: 8081
+          env:
+            - name: CONFIG_SERVICE_URI
+              value: "http://config-service:8888"
+            - name: CONFIG_SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: username
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: password
+
+            - name: PRODUCT_SERVICE_PORT
+              value: "8081"
+            - name: EUREKA_SERVICE_URI
+              value: "http://discovery-service:8761/eureka/"
+
+            - name: POSTGRESQL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
+            - name: POSTGRESQL_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRESQL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+
+            - name: MINIO_URL
+              value: "http://minio-0.minio.default.svc.cluster.local:9000"
+            - name: MINIO_ACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: username
+            - name: MINIO_SECRETKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: password
+            - name: MINIO_BUCKET
+              value: "product-photo"
+
+          resources:
+            requests:
+              memory: "450Mi"
+              cpu: "250m"
+            limits:
+              memory: "600Mi"
+              cpu: "750m"
+          livenessProbe:
+            httpGet:
+              path: /products/ping
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /products/ping
+              port: 8081
+            initialDelaySeconds: 10
+
+      restartPolicy: Always
+      
