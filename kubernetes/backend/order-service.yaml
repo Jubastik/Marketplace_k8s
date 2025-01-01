@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  ports:
+    - port: 8083
+      name: order-service
+
+  type: ClusterIP
+  selector:
+    app: order-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      name: order-service
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: jubastik/29_backend_t1
+          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/order-service.jar" ]
+          ports:
+            - containerPort: 8083
+          env:
+            - name: CONFIG_SERVICE_URI
+              value: "http://config-service:8888"
+            - name: CONFIG_SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: username
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: config-secret
+                  key: password
+
+            - name: ORDER_SERVICE_PORT
+              value: "8083"
+            - name: EUREKA_SERVICE_URI
+              value: "http://discovery-service:8761/eureka/"
+
+            - name: POSTGRESQL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
+            - name: POSTGRESQL_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRESQL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+          resources:
+            requests:
+              memory: "450Mi"
+              cpu: "250m"
+            limits:
+              memory: "600Mi"
+              cpu: "750m"
+          livenessProbe:
+            httpGet:
+              path: /orders/ping
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /orders/ping
+              port: 8083
+            initialDelaySeconds: 10
+
+      restartPolicy: Always
+      
