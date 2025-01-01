@@ -7,6 +7,7 @@ type: Opaque
 stringData:
   username: 'minio_user'
   password: 'strong_password'
+  url: 'http://minio-0.minio.default.svc.cluster.local:9000'
 
 ---
 
@@ -72,7 +73,7 @@ spec:
                   key: password
           resources:
             requests:
-              memory: "300Gi"
+              memory: "300Mi"
               cpu: "250m"
             limits:
               memory: "1Gi"

@@ -72,7 +72,10 @@ spec:
                   key: password
 
             - name: MINIO_URL
-              value: "http://minio-0.minio.default.svc.cluster.local:9000"
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: url
             - name: MINIO_ACCESSKEY
               valueFrom:
                 secretKeyRef:
