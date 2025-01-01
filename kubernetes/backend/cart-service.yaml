@@ -33,7 +33,7 @@ spec:
       containers:
         - name: cart-service
           image: jubastik/29_backend_t1
-          command: [ "java", "-jar", "/app/cart-service.jar" ]
+          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/cart-service.jar" ]
           ports:
             - containerPort: 8082
           env:
@@ -72,11 +72,11 @@ spec:
                   key: password
           resources:
             requests:
-              memory: "900Mi"
+              memory: "450Mi"
               cpu: "250m"
             limits:
-              memory: "1200Mi"
-              cpu: "700m"
+              memory: "600Mi"
+              cpu: "750m"
           livenessProbe:
             httpGet:
               path: /carts/ping

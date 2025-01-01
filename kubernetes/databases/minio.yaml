@@ -72,10 +72,10 @@ spec:
                   key: password
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "300Gi"
+              cpu: "250m"
             limits:
-              memory: "2Gi"
+              memory: "1Gi"
               cpu: "1"
 
   volumeClaimTemplates:

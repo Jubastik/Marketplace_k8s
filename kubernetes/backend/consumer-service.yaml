@@ -1,42 +1,41 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: gateway-service
+  name: consumer-service
 spec:
   ports:
-    - port: 8765
-      name: gateway-service
+    - port: 8085
+      name: consumer-service
 
-  type: LoadBalancer
+  type: ClusterIP
   selector:
-    app: gateway-service
+    app: consumer-service
 
 ---
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gateway-service
+  name: consumer-service
   labels:
-    app: gateway-service
+    app: consumer-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gateway-service
+      app: consumer-service
   template:
     metadata:
-      name: gateway-service
+      name: consumer-service
       labels:
-        app: gateway-service
+        app: consumer-service
     spec:
-      priorityClassName: "high-priority"
       containers:
-        - name: gateway-service
+        - name: consumer-service
           image: jubastik/29_backend_t1
-          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/gateway-service.jar" ]
+          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/consumer-service.jar" ]
           ports:
-            - containerPort: 8765
+            - containerPort: 8085
           env:
             - name: CONFIG_SERVICE_URI
               value: "http://config-service:8888"
@@ -51,10 +50,26 @@ spec:
                   name: config-secret
                   key: password
 
-            - name: GATEWAY_SERVICE_PORT
-              value: "8765"
+            - name: CONSUMER_SERVICE_PORT
+              value: "8085"
             - name: EUREKA_SERVICE_URI
               value: "http://discovery-service:8761/eureka/"
+
+            - name: POSTGRESQL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
+            - name: POSTGRESQL_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRESQL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
           resources:
             requests:
               memory: "450Mi"
@@ -64,15 +79,15 @@ spec:
               cpu: "750m"
           livenessProbe:
             httpGet:
-              path: /actuator/health
-              port: 8765
+              path: /consumers/ping
+              port: 8085
             initialDelaySeconds: 60
             periodSeconds: 20
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /actuator/health
-              port: 8765
+              path: /consumers/ping
+              port: 8085
             initialDelaySeconds: 10
 
       restartPolicy: Always

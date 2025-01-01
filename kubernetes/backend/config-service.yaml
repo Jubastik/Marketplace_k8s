@@ -46,7 +46,7 @@ spec:
       containers:
         - name: config-service
           image: jubastik/29_backend_t1
-          command: [ "java", "-jar", "/app/config-service.jar" ]
+          command: [ "java", "-Xms256m","-Xmx512m", "-jar", "/app/config-service.jar" ]
           ports:
             - containerPort: 8888
           env:
@@ -99,11 +99,11 @@ spec:
               value: "8085"
           resources:
             requests:
-              memory: "400Mi"
+              memory: "450Mi"
               cpu: "250m"
             limits:
-              memory: "800Mi"
-              cpu: "1"
+              memory: "600Mi"
+              cpu: "1.5"
           livenessProbe:
             httpGet:
               path: /actuator/health
