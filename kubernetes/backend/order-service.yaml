@@ -30,6 +30,17 @@ spec:
       labels:
         app: order-service
     spec:
+      initContainers:
+        - name: wait-for
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              while ! nc -z discovery-service 8761; do
+                echo "Ожидание discovery-service на порту 8761..."
+                sleep 5
+              done
       containers:
         - name: order-service
           image: jubastik/29_backend_t1

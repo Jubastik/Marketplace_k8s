@@ -31,6 +31,17 @@ spec:
         app: discovery-service
     spec:
       priorityClassName: "high-priority"
+      initContainers:
+        - name: wait-for
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              while ! nc -z config-service 8888; do
+                echo "Ожидание config-service на порту 8888..."
+                sleep 5
+              done
       containers:
         - name: discovery-service
           image: jubastik/29_backend_t1
